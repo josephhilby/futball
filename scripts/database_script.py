@@ -2,28 +2,36 @@
 
 import pandas as pd
 import sqlite3
+import csv
+import os
 
-conn = sqlite3.connect("Sqlite3.db")
-c = conn.cursor()
+def populate_database():
+  path = "./data/raw"
+  files = os.listdir(path)
 
-game_table = {
-  "name": "games",
-  "columns": "(game_id int, season int, type text, date_time text, away_team_id int, home_team_id int, away_goals int, home_goals int, venue text, venue_link text)"
-}
+  for file in files:
+    database_table = {}
 
-teams_table = {
-  "name": "teams",
-  "columns": "(team_id int, franchiseId int, teamName text, abbreviation text, Stadium text, link text)"
-}
+    name = file.replace(".csv", "")
+    database_table["name"] = name
 
-game_teams_table = {
-  "name": "game_teams",
-  "columns": "(game_id int, team_id int, HoA text, result text, settled_in text, head_coach text, goals int, shots int, tackles int, pim int, powerPlayOpportunities int, powerPlayGoals int, faceOffWinPercentage float, giveaways int, takeaways int)"
-}
+    file_path = open(f"{path}/{file}")
+    csv_reader = csv.reader(file_path)
+
+    columns_array = next(csv_reader)
+    columns_string = ", ".join(columns_array)
+    database_table["columns"] = f"({columns_string})"
+
+    connect_database
+    create_table(database_table["name"], database_table["columns"])
+
+def connect_database():
+  conn = sqlite3.connect("Sqlite3.db")
+  cur = conn.cursor()
 
 def create_table(name, columns):
   if not (table_exists(name)):
-    c.execute(f'''CREATE TABLE {name} {columns}''')
+    cur.execute(f'''CREATE TABLE {name}{columns}''')
     table = pd.read_csv(f"./data/raw/{name}.csv")
     table.to_sql(f"{name}", conn, if_exists="replace", index=False)
     print(f"{name} table created")
@@ -31,12 +39,10 @@ def create_table(name, columns):
     print(f"{name} table already exists")
 
 def table_exists(name):
-  r = c.execute('''SELECT name FROM sqlite_schema WHERE type='table' AND name=?;''', [name]).fetchall()
-  if r == []:
+  first_row = cur.execute('''SELECT name FROM sqlite_schema WHERE type='table' AND name=?;''', [name]).fetchone()
+  if first_row == None:
     return False
   else:
     return True
 
-create_table(game_table["name"], game_table["columns"])
-create_table(teams_table["name"], teams_table["columns"])
-create_table(game_teams_table["name"], game_teams_table["columns"])
+populate_database
