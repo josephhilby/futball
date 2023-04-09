@@ -22,15 +22,16 @@ def populate_database():
     columns_string = ", ".join(columns_array)
     database_table["columns"] = f"({columns_string})"
 
-    connect_database
     create_table(database_table["name"], database_table["columns"])
 
 def connect_database():
-  conn = sqlite3.connect("Sqlite3.db")
-  cur = conn.cursor()
+  return sqlite3.connect("Sqlite3.db")
 
 def create_table(name, columns):
-  if not (table_exists(name)):
+  conn = connect_database()
+  cur = conn.cursor()
+
+  if not (table_exists(name, cur)):
     cur.execute(f'''CREATE TABLE {name}{columns}''')
     table = pd.read_csv(f"./data/raw/{name}.csv")
     table.to_sql(f"{name}", conn, if_exists="replace", index=False)
@@ -38,11 +39,11 @@ def create_table(name, columns):
   else:
     print(f"{name} table already exists")
 
-def table_exists(name):
+def table_exists(name, cur):
   first_row = cur.execute('''SELECT name FROM sqlite_schema WHERE type='table' AND name=?;''', [name]).fetchone()
   if first_row == None:
     return False
   else:
     return True
 
-populate_database
+populate_database()
