@@ -1,4 +1,4 @@
-# Populate database with CSV
+# Populate database with CSV files in ../data/raw
 
 import pandas as pd
 import sqlite3
@@ -34,7 +34,7 @@ def create_table(name, columns):
   if not (table_exists(name, cur)):
     cur.execute(f'''CREATE TABLE {name}{columns}''')
     table = pd.read_csv(f"./data/raw/{name}.csv")
-    table.to_sql(f"{name}", conn, if_exists="replace", index=False)
+    table.to_sql(f"{name}", conn, if_exists="replace", index=True)
     print(f"{name} table created")
   else:
     print(f"{name} table already exists")
