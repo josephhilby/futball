@@ -5,7 +5,10 @@ import sqlite3
 import csv
 import os
 
-def populate_database():
+
+tables = []
+
+def read_csv_headers():
   path = "./data/raw"
   files = os.listdir(path)
 
@@ -19,13 +22,33 @@ def populate_database():
     csv_reader = csv.reader(file_path)
 
     columns_array = next(csv_reader)
-    columns_string = ", ".join(columns_array)
-    database_table["columns"] = f"({columns_string})"
+    database_table["columns"] = columns_array
 
-    create_table(database_table["name"], database_table["columns"])
+    tables.append(database_table)
+
+def determine_relationships():
+  for table in tables:
+    if "_" in table["name"]:
+      name_array = table["name"].split("_")
+      for name in name_array:
+        name_no_s = name.removesuffix('s')
+        table["columns"].append(f"FOREIGN KEY({name_no_s}_id) REFERENCES {name_no_s}s({name_no_s}_id)")
+
+def create_sql_call():
+  for table in tables:
+    columns_string = ", ".join(table["columns"])
+    table["columns"] = f"({columns_string})"
 
 def connect_database():
   return sqlite3.connect("Sqlite3.db")
+
+def table_exists(name, cur):
+  first_row = cur.execute(
+      '''SELECT name FROM sqlite_schema WHERE type='table' AND name=?;''', [name]).fetchone()
+  if first_row == None:
+    return False
+  else:
+    return True
 
 def create_table(name, columns):
   conn = connect_database()
@@ -39,11 +62,11 @@ def create_table(name, columns):
   else:
     print(f"{name} table already exists")
 
-def table_exists(name, cur):
-  first_row = cur.execute('''SELECT name FROM sqlite_schema WHERE type='table' AND name=?;''', [name]).fetchone()
-  if first_row == None:
-    return False
-  else:
-    return True
+def upload_to_database():
+  read_csv_headers()
+  determine_relationships()
+  create_sql_call()
+  for table in tables:
+    create_table(table["name"], table["columns"])
 
-populate_database()
+upload_to_database()
