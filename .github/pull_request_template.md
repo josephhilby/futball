@@ -1,12 +1,11 @@
-Type of change
+Type of change:
 
-- [ ] New feature
-- [ ] Bug Fix
-- [ ] Refactor
+- New feature / Bug Fix / Refactor
 
 Implements/Fixes:
 
-description closes issue #
+- This PR closes issue #
+- Description...
 
 Checklist:
 
